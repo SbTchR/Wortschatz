@@ -1,0 +1,38 @@
+name: Publier Wortschatz
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wortschatz-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - name: Ajouter le coffre de transfert chiffré
+        env:
+          WORTSCHATZ_TRANSFER: ${{ secrets.WORTSCHATZ_TRANSFER }}
+        run: |
+          if [ -n "$WORTSCHATZ_TRANSFER" ]; then
+            printf '%s' "$WORTSCHATZ_TRANSFER" > site/wortschatz-transfert-v1.json
+          fi
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: pages
